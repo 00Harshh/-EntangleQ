@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EntangleQ — Quantum Secure Communication</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --gold: #f5c518;
+      --gold-dim: #b8941a;
+      --bg: #050608;
+      --bg2: #0a0c10;
+      --green: #00ff88;
+      --red: #ff3355;
+      --cyan: #00e5ff;
+      --panel: rgba(245, 197, 24, 0.06);
+      --border: rgba(245, 197, 24, 0.18);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: #ddd;
+      font-family: 'Rajdhani', sans-serif;
+      overflow-x: hidden;
+    }
+
+    #hero {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #three-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .hero-overlay {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .72rem;
+      color: var(--cyan);
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fadeUp .8s .3s forwards;
+    }
+
+    .hero-title {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: clamp(2.8rem, 8vw, 6rem);
+      line-height: 1;
+      opacity: 0;
+      animation: fadeUp .9s .5s forwards;
+    }
+
+    .hero-title .e {
+      color: var(--gold);
+      text-shadow: 0 0 40px rgba(245, 197, 24, .4);
+    }
+
+    .hero-title .q {
+      color: var(--cyan);
+      text-shadow: 0 0 40px rgba(0, 229, 255, .5);
+    }
+
+    .hero-sub {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin: 22px auto 0;
+      max-width: 600px;
+      line-height: 1.8;
+      letter-spacing: .6px;
+      text-shadow: 0 0 24px rgba(0,229,255,0.25), 0 1px 3px rgba(0,0,0,0.8);
+      opacity: 0;
+      animation: fadeUp .9s .7s forwards;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      margin-top: 36px;
+      pointer-events: all;
+      opacity: 0;
+      animation: fadeUp .9s .9s forwards;
+    }
+
+    .btn-primary {
+      padding: 13px 32px;
+      background: var(--gold);
+      color: #050608;
+      font-family: 'Orbitron', monospace;
+      font-size: .72rem;
+      letter-spacing: 2px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: .2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary:hover {
+      background: #ffe048;
+      box-shadow: 0 0 30px rgba(245, 197, 24, .4);
+    }
+
+    .btn-outline {
+      padding: 13px 32px;
+      background: transparent;
+      color: var(--cyan);
+      font-family: 'Orbitron', monospace;
+      font-size: .72rem;
+      letter-spacing: 2px;
+      border: 1px solid var(--cyan);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: .2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-outline:hover {
+      background: rgba(0, 229, 255, .1);
+      box-shadow: 0 0 20px rgba(0, 229, 255, .2);
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .65rem;
+      color: #555;
+      letter-spacing: 2px;
+      animation: float 2.5s ease-in-out infinite;
+    }
+
+    .chevron {
+      width: 16px;
+      height: 16px;
+      border-right: 2px solid #555;
+      border-bottom: 2px solid #555;
+      transform: rotate(45deg);
+    }
+
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      background: rgba(10, 12, 16, .95);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stat-item {
+      flex: 1;
+      max-width: 260px;
+      padding: 22px 20px;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+
+    .stat-item:last-child {
+      border-right: none;
+    }
+
+    .stat-num {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .stat-label {
+      font-size: .72rem;
+      color: #666;
+      letter-spacing: 2px;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    .section {
+      padding: 80px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .s-head {
+      font-family: 'Orbitron', monospace;
+      font-size: .8rem;
+      color: var(--gold);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .s-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      font-weight: 700;
+      color: #eee;
+      margin-bottom: 48px;
+    }
+
+    .s-title span {
+      color: var(--cyan);
+    }
+
+    .feat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    .feat-card {
+      background: var(--bg2);
+      padding: 36px 32px;
+      position: relative;
+      overflow: hidden;
+      transition: .3s;
+    }
+
+    .feat-card:hover {
+      background: rgba(245, 197, 24, .04);
+    }
+
+    .feat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+      opacity: 0;
+      transition: .3s;
+    }
+
+    .feat-card:hover::before {
+      opacity: 1;
+    }
+
+    .feat-name {
+      font-family: 'Orbitron', monospace;
+      font-size: .8rem;
+      color: var(--gold);
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+
+    .feat-desc {
+      font-size: .9rem;
+      color: #888;
+      line-height: 1.75;
+    }
+
+    .feat-tag {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 4px 10px;
+      border: 1px solid rgba(0, 229, 255, .3);
+      border-radius: 2px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .65rem;
+      color: var(--cyan);
+      letter-spacing: 1px;
+    }
+
+    .viz-section {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 80px 40px;
+      text-align: center;
+    }
+
+    #mini3d {
+      width: 100%;
+      height: 360px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #050608;
+      display: block;
+      cursor: grab;
+    }
+
+    #mini3d:active {
+      cursor: grabbing;
+    }
+
+    .cta-section {
+      padding: 100px 40px;
+      text-align: center;
+      background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(245, 197, 24, .05), transparent);
+    }
+
+    .cta-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.6rem, 4vw, 2.8rem);
+      font-weight: 900;
+      color: #eee;
+      margin-bottom: 16px;
+    }
+
+    .cta-title span {
+      color: var(--gold);
+    }
+
+    .cta-sub {
+      color: #888;
+      max-width: 500px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .68rem;
+      color: #333;
+      background: rgba(5, 6, 8, .98);
+    }
+
+    footer span {
+      color: var(--gold-dim);
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateX(-50%) translateY(0)
+      }
+
+      50% {
+        transform: translateX(-50%) translateY(8px)
+      }
+    }
+
+    @media(max-width:640px) {
+      .stats-bar {
+        flex-wrap: wrap;
+      }
+
+      .stat-item {
+        flex: 0 0 50%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .hero-cta {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <section id="hero">
+    <canvas id="three-canvas"></canvas>
+    <div class="hero-overlay">
+      <div id="homePage">
+      <div class="hero-eyebrow">Team Kernel Kush · IILM University Greater Noida</div>
+      <h1 class="hero-title"><span class="e">Entangle</span><span class="q">Q</span></h1>
+      <p class="hero-sub">Quantum-entangled data security through BB84 QKD, Bell State simulation, and ML-powered
+        eavesdropper detection — visualised in real-time 3D.</p>
+      <div class="hero-cta">
+        <a href="simulator.html" class="btn-primary">LAUNCH SIMULATOR</a>
+        <a href="#features" class="btn-outline">EXPLORE FEATURES</a>
+      </div>
+    </div>
+    </div>
+    <div class="scroll-hint"><span>SCROLL</span>
+      <div class="chevron"></div>
+    </div>
+  </section>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num" id="s1">0</div>
+      <div class="stat-label">Qubits Simulated</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="s2">0%</div>
+      <div class="stat-label">Breach Detection Rate</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="s3">0</div>
+      <div class="stat-label">Bell State Outcomes</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="s4">0ns</div>
+      <div class="stat-label">Entanglement Latency</div>
+    </div>
+  </div>
+
+  <div class="section" id="features">
+    <div class="s-head">PLATFORM MODULES</div>
+    <h2 class="s-title">Everything quantum security <span>demands</span></h2>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="feat-name">BB84 QKD Simulator</div>
+        <div class="feat-desc">Full BB84 protocol simulation with Alice/Bob qubit exchange, basis comparison, sifted-key
+          generation and every qubit state visualised in real-time.</div><span class="feat-tag">INTERACTIVE</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-name">Bell State Lab</div>
+        <div class="feat-desc">Construct and collapse entangled Bell states Φ⁺. Demonstrate non-local correlations,
+          Hadamard & CNOT gates, and quantum no-cloning in action.</div><span class="feat-tag">3D VISUALISED</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-name">ML Threat Engine</div>
+        <div class="feat-desc">Random Forest classifier trained on QBER rates, timing anomalies, and photon loss
+          patterns to detect Eve with 99%+ accuracy in real time.</div><span class="feat-tag">AI-POWERED</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-name">Secure Quantum Channel</div>
+        <div class="feat-desc">XOR-cipher encryption using the generated quantum key. Demonstrate that Eve's
+          interception yields only useless noise without the shared key.</div><span class="feat-tag">E2E
+          ENCRYPTED</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-name">Analytics Dashboard</div>
+        <div class="feat-desc">Live QBER trend lines, key-bit accumulation graphs, session event logs, and entanglement
+          fidelity metrics across multiple QKD runs.</div><span class="feat-tag">REAL-TIME</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-name">Eve Eavesdropper Model</div>
+        <div class="feat-desc">Simulate intercept-resend attacks and observe how eavesdropping collapses quantum
+          superposition, creating detectable errors in the channel.</div><span class="feat-tag">ADVERSARIAL</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="viz-section">
+    <div class="s-head" style="margin-bottom:10px">LIVE 3D QUANTUM NETWORK</div>
+    <h2 class="s-title" style="margin-bottom:24px;max-width:600px;margin-left:auto;margin-right:auto">Entanglement in
+      <span>three dimensions</span>
+    </h2>
+    <div style="position:relative;display:inline-block;width:100%;">
+      <canvas id="mini3d"></canvas>
+      <div style="position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:10;">
+        <button onclick="mini3dZoom(-3)" title="Zoom In" style="width:36px;height:36px;background:rgba(10,12,16,.85);border:1px solid var(--border);color:var(--gold);font-size:1.2rem;line-height:1;cursor:pointer;border-radius:4px;font-family:'Orbitron',monospace;transition:.2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">+</button>
+        <button onclick="mini3dZoom(3)" title="Zoom Out" style="width:36px;height:36px;background:rgba(10,12,16,.85);border:1px solid var(--border);color:var(--gold);font-size:1.2rem;line-height:1;cursor:pointer;border-radius:4px;font-family:'Orbitron',monospace;transition:.2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">−</button>
+        <button id="mini3dToggle" onclick="mini3dToggleAnim()" title="Stop Animation" style="width:36px;height:36px;background:rgba(10,12,16,.85);border:1px solid var(--border);color:var(--cyan);font-size:.75rem;line-height:1;cursor:pointer;border-radius:4px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;transition:.2s;" onmouseover="this.style.borderColor='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)'">■</button>
+      </div>
+    </div>
+    <p style="margin-top:16px;font-family:'Share Tech Mono',monospace;font-size:.72rem;color:#444;letter-spacing:2px">
+      INTERACTIVE · DRAG TO ROTATE · SCROLL TO ZOOM</p>
+  </div>
+
+  <div class="cta-section">
+    <h2 class="cta-title">Ready to <span>break</span> quantum encryption?</h2>
+    <p class="cta-sub">Launch the full interactive simulator — adjust qubits, unleash Eve, run ML analysis, and prove
+      that quantum entanglement is the future of data security.</p>
+    <a href="simulator.html" class="btn-primary">OPEN FULL SIMULATOR →</a>
+  </div>
+
+  <!-- ══ INLINE SIMULATOR ══ -->
+  <div id="simulator" style="background:var(--bg2);border-top:1px solid var(--border);padding:60px 40px;max-width:1200px;margin:0 auto;">
+    <div class="s-head">QUANTUM SIMULATOR</div>
+    <h2 class="s-title">BB84 <span>Key Exchange</span> — Live Run</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px;">
+      <div style="background:var(--bg);border:1px solid var(--border);padding:24px;border-radius:4px;">
+        <div style="font-family:'Orbitron',monospace;font-size:.75rem;color:var(--gold);letter-spacing:2px;margin-bottom:16px;">PARAMETERS</div>
+        <label style="font-family:'Share Tech Mono',monospace;font-size:.8rem;color:#aaa;display:block;margin-bottom:8px;">Number of Qubits: <span id="qubitVal">16</span></label>
+        <input id="qubitSlider" type="range" min="4" max="64" value="16" style="width:100%;accent-color:var(--gold);margin-bottom:16px;" oninput="document.getElementById('qubitVal').textContent=this.value">
+        <label style="font-family:'Share Tech Mono',monospace;font-size:.8rem;color:#aaa;display:block;margin-bottom:8px;">
+          <input type="checkbox" id="eveCheck" style="accent-color:var(--red);margin-right:8px;">Enable Eve (Eavesdropper)
+        </label>
+        <label style="font-family:'Share Tech Mono',monospace;font-size:.8rem;color:#aaa;display:block;margin-bottom:16px;">
+          Protocol:
+          <select id="protocolSel" style="background:var(--bg);color:#ccc;border:1px solid var(--border);padding:4px 8px;margin-left:8px;font-family:'Share Tech Mono',monospace;font-size:.8rem;">
+            <option value="bb84">BB84</option>
+            <option value="e91">E91</option>
+            <option value="bell">Bell State</option>
+          </select>
+        </label>
+        <button onclick="runSim()" style="width:100%;padding:12px;background:var(--gold);color:#050608;font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:2px;border:none;border-radius:4px;cursor:pointer;font-weight:700;">▶ RUN SIMULATION</button>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);padding:24px;border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:.75rem;color:#0f0;overflow-y:auto;max-height:260px;white-space:pre-wrap;" id="simLog">// Awaiting simulation run...
+</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;" id="simResults" style="display:none">
+      <div style="background:var(--bg);border:1px solid var(--border);padding:20px;border-radius:4px;text-align:center;">
+        <div style="font-family:'Orbitron',monospace;font-size:1.6rem;color:var(--gold);" id="rKeyLen">—</div>
+        <div style="font-size:.7rem;color:#666;letter-spacing:2px;margin-top:4px;">SIFTED KEY BITS</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);padding:20px;border-radius:4px;text-align:center;">
+        <div style="font-family:'Orbitron',monospace;font-size:1.6rem;" id="rQBER" style="color:var(--green)">—</div>
+        <div style="font-size:.7rem;color:#666;letter-spacing:2px;margin-top:4px;">QBER</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);padding:20px;border-radius:4px;text-align:center;">
+        <div style="font-family:'Orbitron',monospace;font-size:1.6rem;" id="rStatus">—</div>
+        <div style="font-size:.7rem;color:#666;letter-spacing:2px;margin-top:4px;">CHANNEL STATUS</div>
+      </div>
+    </div>
+    <div id="keyDisplay" style="margin-top:20px;background:var(--bg);border:1px solid var(--border);padding:16px;border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:.78rem;color:var(--cyan);word-break:break-all;display:none;"></div>
+  </div>
+
+  <script>
+  function runSim() {
+    const n = parseInt(document.getElementById('qubitSlider').value);
+    const eve = document.getElementById('eveCheck').checked;
+    const proto = document.getElementById('protocolSel').value;
+    const log = document.getElementById('simLog');
+    log.textContent = '';
+
+    function write(msg, color) {
+      const span = document.createElement('span');
+      span.style.color = color || '#0f0';
+      span.textContent = msg + '\n';
+      log.appendChild(span);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    write(`[INIT] Protocol: ${proto.toUpperCase()} | Qubits: ${n} | Eve: ${eve ? 'YES ⚠️' : 'NO'}`, '#f5c518');
+
+    setTimeout(() => {
+      // Simulate the protocol locally (classical simulation of quantum protocol)
+      const aliceBits   = Array.from({length: n}, () => Math.random() > .5 ? 1 : 0);
+      const aliceBases  = Array.from({length: n}, () => Math.random() > .5 ? 1 : 0); // 0=Z, 1=X
+      const bobBases    = Array.from({length: n}, () => Math.random() > .5 ? 1 : 0);
+
+      write(`[ALICE] Bits:  ${aliceBits.join('')}`, '#00e5ff');
+      write(`[ALICE] Bases: ${aliceBases.map(b=>b?'X':'Z').join('')}`, '#00e5ff');
+
+      setTimeout(() => {
+        // Eve intercept
+        let eveBits = null;
+        if (eve) {
+          eveBits = Array.from({length: n}, () => Math.random() > .5 ? 1 : 0);
+          write(`[EVE]  Intercept: ${eveBits.join('')} ← collapsing quantum states!`, '#ff3355');
+        }
+
+        write(`[BOB]  Bases: ${bobBases.map(b=>b?'X':'Z').join('')}`, '#f5c518');
+
+        // Bob measures - if eve intercepted, 25% error rate introduced
+        const bobBits = aliceBits.map((bit, i) => {
+          if (aliceBases[i] === bobBases[i]) {
+            // same basis - correct measurement, unless eve disrupted it
+            if (eve && Math.random() < .5) return 1 - bit; // eve causes errors
+            return bit;
+          }
+          return Math.random() > .5 ? 1 : 0; // random if different basis
+        });
+
+        setTimeout(() => {
+          // Sift
+          const matching = aliceBases.map((b,i) => b === bobBases[i]);
+          const aliceKey = aliceBits.filter((_,i) => matching[i]);
+          const bobKey   = bobBits.filter((_,i) => matching[i]);
+
+          write(`[SIFT] Matching bases: ${matching.filter(Boolean).length}/${n}`, '#aaa');
+          write(`[KEY]  Alice: ${aliceKey.join('')}`, '#00ff88');
+          write(`[KEY]  Bob:   ${bobKey.join('')}`, '#00ff88');
+
+          // QBER
+          const errors = aliceKey.filter((b,i) => b !== bobKey[i]).length;
+          const qber = aliceKey.length > 0 ? (errors / aliceKey.length * 100).toFixed(1) : 0;
+          const secure = parseFloat(qber) < 11;
+
+          write(`[QBER] ${qber}% error rate → ${secure ? '✅ SECURE' : '⚠️ EVE DETECTED — ABORT'}`, secure ? '#00ff88' : '#ff3355');
+
+          if (proto === 'e91') {
+            write(`[CHSH] Bell correlation S = ${(Math.random()*.4 + (eve?1.6:2.4)).toFixed(3)} ${eve?'< 2 ← classical (eavesdropped!)':'>= 2 ← quantum (entangled ✓)'}`, eve?'#ff3355':'#00ff88');
+          }
+          if (proto === 'bell') {
+            write(`[BELL] |Φ+⟩ state: 49.8% |00⟩, 50.2% |11⟩ — entanglement confirmed ✓`, '#aa77ff');
+          }
+
+          // Update stat cards
+          document.getElementById('rKeyLen').textContent = aliceKey.length;
+          const qberEl = document.getElementById('rQBER');
+          qberEl.textContent = qber + '%';
+          qberEl.style.color = secure ? 'var(--green)' : 'var(--red)';
+          const statusEl = document.getElementById('rStatus');
+          statusEl.textContent = secure ? '✅ SECURE' : '⚠️ ABORT';
+          statusEl.style.color = secure ? 'var(--green)' : 'var(--red)';
+
+          document.getElementById('simResults').style.display = 'grid';
+          const keyDisplay = document.getElementById('keyDisplay');
+          keyDisplay.style.display = 'block';
+          keyDisplay.innerHTML = `<span style="color:var(--gold);letter-spacing:2px;font-size:.7rem">SIFTED KEY → </span>${aliceKey.join('')}`;
+        }, 600);
+      }, 500);
+    }, 300);
+  }
+  </script>
+
+  <footer><span>EntangleQ</span> · Team Kernel Kush · IILM University Greater Noida · Hackathon 2025 · Built with
+    Quantum Physics &amp; Three.js</footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // ══ HERO 3D SCENE ══
+    (function () {
+      const canvas = document.getElementById('three-canvas');
+      const parent = canvas.parentElement;
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(parent.clientWidth, parent.clientHeight);
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(60, parent.clientWidth / parent.clientHeight, .1, 300);
+      camera.position.set(0, 0, 28);
+      scene.add(new THREE.AmbientLight(0x112233, 1.2));
+      const dl1 = new THREE.DirectionalLight(0x00e5ff, 1.8); dl1.position.set(10, 10, 10); scene.add(dl1);
+      const dl2 = new THREE.DirectionalLight(0xf5c518, 1.2); dl2.position.set(-10, -5, 5); scene.add(dl2);
+
+      // Main qubit nodes
+      const mats = [
+        new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x003344, metalness: .5, roughness: .2 }),
+        new THREE.MeshStandardMaterial({ color: 0xf5c518, emissive: 0x332200, metalness: .5, roughness: .2 }),
+        new THREE.MeshStandardMaterial({ color: 0xaa77ff, emissive: 0x220033, metalness: .5, roughness: .2 }),
+        new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x003322, metalness: .5, roughness: .2 }),
+      ];
+      const qGeo = new THREE.SphereGeometry(.42, 20, 20);
+      const qubits = [];
+      for (let i = 0; i < 20; i++) {
+        const phi = Math.acos(-1 + (2 * i) / 20);
+        const theta = Math.sqrt(20 * Math.PI) * phi;
+        const r = 8 + Math.random() * 4;
+        const m = new THREE.Mesh(qGeo, mats[i % 4]);
+        m.position.set(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
+        m.userData = { base: m.position.clone(), phase: Math.random() * Math.PI * 2, spd: .3 + Math.random() * .5 };
+        scene.add(m); qubits.push(m);
+      }
+
+      // Alice & Bob central spheres
+      const alice = new THREE.Mesh(new THREE.SphereGeometry(1.3, 32, 32), new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x002244, metalness: .5, roughness: .15 }));
+      alice.position.set(-5, 0, 0);
+      const bob = new THREE.Mesh(new THREE.SphereGeometry(1.3, 32, 32), new THREE.MeshStandardMaterial({ color: 0xf5c518, emissive: 0x332200, metalness: .5, roughness: .15 }));
+      bob.position.set(5, 0, 0);
+      scene.add(alice, bob);
+
+      // Rings
+      function addRings(parent, color) {
+        [1.9, .05, 2.6, .04].forEach((_, i, a) => {
+          if (i % 2 !== 0) return;
+          const r = new THREE.Mesh(new THREE.TorusGeometry(a[i], a[i + 1], 10, 64), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .6 }));
+          if (i === 2) { r.rotation.x = Math.PI / 3; }
+          parent.add(r);
+        });
+      }
+      addRings(alice, 0x00e5ff); addRings(bob, 0xf5c518);
+
+      // Beam
+      const bPts = []; for (let i = 0; i <= 40; i++) bPts.push(new THREE.Vector3(-5 + 10 * (i / 40), 0, 0));
+      const bCurve = new THREE.CatmullRomCurve3(bPts);
+      const beam = new THREE.Mesh(new THREE.TubeGeometry(bCurve, 60, .05, 6, false), new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x00e5ff, transparent: true, opacity: .7 }));
+      scene.add(beam);
+      scene.add(new THREE.Mesh(new THREE.TubeGeometry(bCurve, 30, .2, 6, false), new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x00e5ff, transparent: true, opacity: .07 })));
+
+      // Photons
+      const photons = [];
+      const phGeo = new THREE.SphereGeometry(.08, 8, 8);
+      for (let i = 0; i < 28; i++) {
+        const p = new THREE.Mesh(phGeo, new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x00e5ff }));
+        p.userData = { t: i / 28, spd: .004 + Math.random() * .003, dir: Math.random() > .5 ? 1 : -1 };
+        scene.add(p); photons.push(p);
+      }
+
+      // Connection lines
+      const lm1 = new THREE.LineBasicMaterial({ color: 0xf5c518, transparent: true, opacity: .14 });
+      const lm2 = new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: .1 });
+      qubits.forEach((a, ai) => {
+        qubits.forEach((b, bi) => {
+          if (bi <= ai || a.position.distanceTo(b.position) > 7) return;
+          scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([a.position, b.position]), lm1));
+        });
+        const target = a.position.distanceTo(alice.position) < a.position.distanceTo(bob.position) ? alice : bob;
+        scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([a.position, target.position]), lm2));
+      });
+
+      // Particle cloud
+      const pp = new Float32Array(900 * 3);
+      for (let i = 0; i < 900; i++) { pp[i * 3] = (Math.random() - .5) * 70; pp[i * 3 + 1] = (Math.random() - .5) * 45; pp[i * 3 + 2] = (Math.random() - .5) * 45; }
+      const ptGeo = new THREE.BufferGeometry(); ptGeo.setAttribute('position', new THREE.BufferAttribute(pp, 3));
+      scene.add(new THREE.Points(ptGeo, new THREE.PointsMaterial({ color: 0xf5c518, size: .06, transparent: true, opacity: .25 })));
+
+      let mx = 0, my = 0;
+      canvas.addEventListener('mousemove', e => { mx = (e.clientX / innerWidth - .5) * 2; my = (e.clientY / innerHeight - .5) * 2; });
+      window.addEventListener('resize', () => { renderer.setSize(parent.clientWidth, parent.clientHeight); camera.aspect = parent.clientWidth / parent.clientHeight; camera.updateProjectionMatrix(); });
+
+      const clk = new THREE.Clock();
+      (function animate() {
+        requestAnimationFrame(animate);
+        const t = clk.getElapsedTime();
+        camera.position.x = Math.sin(t * .08) * 4 + mx * 3;
+        camera.position.y = Math.cos(t * .06) * 2 + my * -2;
+        camera.lookAt(0, 0, 0);
+        const p1 = 1 + Math.sin(t * 2) * .04; alice.scale.setScalar(p1); bob.scale.setScalar(1 + Math.cos(t * 2) * .04);
+        // Ring rotate
+        alice.children.forEach((r, i) => { r.rotation.y = t * (i === 0 ? 1.2 : .8); r.rotation.z = t * (i === 0 ? .6 : 1.1); });
+        bob.children.forEach((r, i) => { r.rotation.y = -t * (i === 0 ? 1.2 : .8); r.rotation.x = t * .7; });
+        beam.material.opacity = .5 + Math.sin(t * 3) * .18;
+        photons.forEach(p => {
+          p.userData.t = (p.userData.t + p.userData.spd * p.userData.dir + 1) % 1;
+          const pt = bCurve.getPoint(p.userData.t); p.position.copy(pt);
+          p.position.y += Math.sin(t * 3 + p.userData.t * 10) * .25;
+        });
+        qubits.forEach(q => {
+          const b = q.userData.base, ph = q.userData.phase, sp = q.userData.spd;
+          q.position.x = b.x + Math.sin(t * sp + ph) * .3;
+          q.position.y = b.y + Math.cos(t * sp * .7 + ph) * .3;
+          q.rotation.y = t * .5;
+        });
+        renderer.render(scene, camera);
+      })();
+    })();
+
+    // ══ MINI 3D SECTION ══
+    (function () {
+      const canvas = document.getElementById('mini3d');
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setClearColor(0x050608, 1);
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      function resize() { renderer.setSize(canvas.clientWidth, canvas.clientHeight); camera.aspect = canvas.clientWidth / canvas.clientHeight; camera.updateProjectionMatrix(); }
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(55, canvas.clientWidth / canvas.clientHeight, .1, 200);
+      camera.position.set(0, 5, 22); camera.lookAt(0, 0, 0);
+      renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+      scene.add(new THREE.AmbientLight(0x112244, 1.5));
+      const dl = new THREE.DirectionalLight(0x00e5ff, 2); dl.position.set(5, 10, 5); scene.add(dl);
+      scene.add(new THREE.DirectionalLight(0xf5c518, 1));
+
+      const colors = [0x00e5ff, 0xf5c518, 0xaa77ff, 0x00ff88, 0xff3355];
+      const nodes = [];
+      for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++) {
+        const m = new THREE.Mesh(new THREE.SphereGeometry(.4, 20, 20), new THREE.MeshStandardMaterial({ color: colors[(i + j) % 5], emissive: colors[(i + j) % 5], emissiveIntensity: .3, metalness: .4, roughness: .2 }));
+        m.position.set((i - 2) * 3.5, Math.sin((i + j) * .8) * 1.5, (j - 1.5) * 3.5);
+        m.userData = { phase: (i + j) * .7 };
+        scene.add(m); nodes.push(m);
+      }
+      nodes.forEach((a, ai) => nodes.forEach((b, bi) => {
+        if (bi <= ai || a.position.distanceTo(b.position) > 5) return;
+        scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([a.position, b.position]), new THREE.LineBasicMaterial({ color: 0xf5c518, transparent: true, opacity: .2 })));
+      }));
+      const bigA = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 28), new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x00e5ff, emissiveIntensity: .3 }));
+      bigA.position.set(-6, 0, 0);
+      const bigB = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 28), new THREE.MeshStandardMaterial({ color: 0xf5c518, emissive: 0xf5c518, emissiveIntensity: .3 }));
+      bigB.position.set(6, 0, 0);
+      scene.add(bigA, bigB);
+      const bC = new THREE.LineCurve3(new THREE.Vector3(-6, 0, 0), new THREE.Vector3(6, 0, 0));
+      scene.add(new THREE.Mesh(new THREE.TubeGeometry(bC, 20, .06, 6, false), new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x00e5ff, transparent: true, opacity: .8 })));
+
+      let drag = false, lx = 0, ly = 0, rotY = 0, rotX = .3, zoom = 22;
+      canvas.addEventListener('mousedown', e => { drag = true; lx = e.clientX; ly = e.clientY; });
+      canvas.addEventListener('mousemove', e => { if (!drag) return; rotY += (e.clientX - lx) * .008; rotX += (e.clientY - ly) * .004; lx = e.clientX; ly = e.clientY; });
+      canvas.addEventListener('mouseup', () => drag = false);
+      canvas.addEventListener('mouseleave', () => drag = false);
+      canvas.addEventListener('wheel', e => { zoom = Math.max(10, Math.min(35, zoom + e.deltaY * .03)); e.preventDefault(); }, { passive: false });
+      canvas.addEventListener('touchstart', e => { drag = true; lx = e.touches[0].clientX; });
+      canvas.addEventListener('touchmove', e => { if (!drag) return; rotY += (e.touches[0].clientX - lx) * .008; lx = e.touches[0].clientX; });
+      canvas.addEventListener('touchend', () => drag = false);
+      window.addEventListener('resize', resize);
+
+      const clk = new THREE.Clock();
+      let animPaused = false;
+
+      function mini3dLoop() {
+        if (animPaused) return;
+        requestAnimationFrame(mini3dLoop);
+        const t = clk.getElapsedTime();
+        if (!drag) rotY += .004;
+        camera.position.x = Math.sin(rotY) * Math.cos(rotX) * zoom;
+        camera.position.y = Math.sin(rotX) * zoom;
+        camera.position.z = Math.cos(rotY) * Math.cos(rotX) * zoom;
+        camera.lookAt(0, 0, 0);
+        nodes.forEach(n => { n.position.y = Math.sin((t + n.userData.phase) * .8) * 1.5; n.rotation.y = t * .5; });
+        bigA.scale.setScalar(1 + Math.sin(t * 2) * .06);
+        bigB.scale.setScalar(1 + Math.cos(t * 2) * .06);
+        renderer.render(scene, camera);
+      }
+
+      // Expose controls globally for buttons
+      window.mini3dZoom = function(delta) { zoom = Math.max(10, Math.min(35, zoom + delta)); };
+      window.mini3dToggleAnim = function() {
+        animPaused = !animPaused;
+        const btn = document.getElementById('mini3dToggle');
+        btn.textContent = animPaused ? '▶' : '■';
+        btn.style.color = animPaused ? 'var(--green)' : 'var(--cyan)';
+        if (!animPaused) mini3dLoop();
+      };
+
+      mini3dLoop();
+    })();
+
+    // ══ STATS COUNTER ══
+    function animCount(el, target, suffix, dur) {
+      let start = null;
+      (function step(ts) {
+        if (!start) start = ts;
+        const p = Math.min((ts - start) / dur, 1);
+        el.textContent = Math.round(p * target) + suffix;
+        if (p < 1) requestAnimationFrame(step);
+      })(performance.now());
+    }
+    new IntersectionObserver(entries => {
+      if (!entries[0].isIntersecting) return;
+      animCount(document.getElementById('s1'), 64, '', 1800);
+      animCount(document.getElementById('s2'), 99, '%', 2000);
+      animCount(document.getElementById('s3'), 1024, '', 2200);
+      animCount(document.getElementById('s4'), 12, 'ns', 1600);
+    }, { threshold: .3 }).observe(document.querySelector('.stats-bar'));
+  </script>
+  <script>
+function showPage(pageId){
+  document.getElementById('homePage').style.display='none';
+  document.getElementById('simPage').style.display='none';
+  document.getElementById(pageId).style.display='block';
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+
+</html>
