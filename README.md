@@ -1,146 +1,85 @@
-# Quantum QKD System
+# EntangleQ
 
-A full-stack Quantum Key Distribution simulator with BB84, E91, QBER monitoring, ML prediction, OTP encryption, and a live dashboard.
+A full-stack Quantum Key Distribution simulator — BB84, E91, real-time QBER monitoring, ML-powered eavesdropper detection, OTP encryption, and a live 3D visualisation. Also runs BB84 and Bell State circuits on **real IBM Quantum hardware**.
+
+Got the idea watching Dark. Learned quantum computing in a week. Built it for a hackathon.
+
+---
+
+## What It Does
+
+### BB84 Protocol
+Alice encodes random bits into qubits using two non-orthogonal bases (Z and X). Bob measures in a random basis. They publicly compare bases and keep only matching ones — the **sifted key**. Any eavesdropper (Eve) is forced to intercept and re-send, collapsing the quantum state and introducing detectable bit errors. That error rate is the **QBER (Quantum Bit Error Rate)**. Above 11% — Eve is in the channel.
+
+### E91 Protocol (Ekert 1991)
+Uses entangled Bell pairs — `(|00⟩ + |11⟩) / √2`. Alice and Bob each receive one qubit and measure at different angles. Correlations are tested against the **CHSH inequality**. If `|S| > 2`, Bell's theorem holds — the channel is quantum and untampered. If S drops to classical values, entanglement is broken. Eve is detected not through errors, but through the **violation of quantum mechanics itself**.
+
+### CHSH Score
+- Classical limit: `|S| ≤ 2`
+- Quantum (Bell pair): `|S| → 2√2 ≈ 2.828`
+- EntangleQ achieves: `S ≈ 2.71` ✅
+
+### OTP-XOR Encryption
+Messages encrypted with the quantum-generated sifted key using one-time pad XOR. Key is consumed once and never reused.
+
+### ML Threat Engine
+GradientBoosting model trained on noise level, attack probability, and channel loss to predict QBER before key exchange — giving early warning before a full QKD run.
+
+### Live Dashboard
+- Real-time QBER trend chart with anomaly detection
+- Qubit exchange visualiser (Alice bits, bases, Bob bases, sifted key)
+- 3D quantum network built in Three.js
+- Session stats, security status gauge, system log
 
 ---
 
 ## Project Structure
 
 ```
-quantum_qkd/
+EntangleQ/
 ├── quantum_engine/
-│   ├── bb84.py         # BB84 protocol simulation (Qiskit)
-│   ├── e91.py          # E91 entanglement protocol (Qiskit)
-│   └── qber.py         # QBER calculation + attack detection
+│   ├── bb84.py           # BB84 protocol (Qiskit + AerSimulator)
+│   ├── e91.py            # E91 entanglement protocol (Qiskit)
+│   └── qber.py           # QBER calculation + attack detection
 ├── api/
-│   └── main.py         # FastAPI backend (all endpoints)
+│   └── main.py           # FastAPI backend
 ├── encryption/
-│   └── otp.py          # OTP XOR encryption/decryption
+│   └── otp.py            # OTP XOR encryption/decryption
 ├── ml_layer/
-│   └── predictor.py    # ML QBER prediction (GradientBoosting)
+│   └── predictor.py      # ML QBER prediction (GradientBoosting)
 ├── dashboard/
-│   ├── package.json    # React app config
-│   └── src/
-│       └── App.jsx     # Live quantum dashboard UI
-├── requirements.txt
-└── README.md
+│   ├── index.html        # Landing page with 3D visualisation
+│   └── simulator.html    # Full interactive simulator
+├── quantum_ibm.py        # Runs on real IBM Quantum hardware
+└── requirements.txt
 ```
 
----
 
-## Setup
-
-### 1. Python Backend
-
-```bash
-cd quantum_qkd
-pip install -r requirements.txt
-```
-
-### 2. Start the FastAPI Server
-
-```bash
-uvicorn api.main:app --reload --port 8000
-```
-
-Visit: http://localhost:8000/docs  ← Interactive Swagger UI
-
-### 3. Start the React Dashboard
-
-```bash
-cd dashboard
-npm install
-npm start
-```
-
-Visit: http://localhost:3000
-
----
-
-## API Endpoints
-
-| Method | Endpoint           | Description                         |
-|--------|--------------------|-------------------------------------|
-| POST   | `/generate_key`    | Run BB84 or E91, return quantum key |
-| POST   | `/simulate_attack` | Simulate Eve's intercept-resend     |
-| POST   | `/encrypt_message` | OTP-XOR encrypt with quantum key    |
-| POST   | `/decrypt_message` | OTP-XOR decrypt                     |
-| GET    | `/qber_monitor`    | Live QBER history + trend analysis  |
-| POST   | `/predict_qber`    | ML-predicted QBER from channel params|
-
----
-
-## Example API Usage
-
-### Generate a Key (BB84)
-```bash
-curl -X POST http://localhost:8000/generate_key \
-  -H "Content-Type: application/json" \
-  -d '{"protocol": "BB84", "num_bits": 256, "noise_level": 0.02}'
-```
-
-### Simulate an Attack
-```bash
-curl -X POST http://localhost:8000/simulate_attack \
-  -H "Content-Type: application/json" \
-  -d '{"protocol": "BB84", "num_bits": 256, "noise_level": 0.02}'
-```
-
-### Encrypt a Message
-```bash
-curl -X POST http://localhost:8000/encrypt_message \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hello Quantum!", "key": [0,1,1,0,...]}'
-```
-
-### ML Prediction
-```bash
-curl -X POST http://localhost:8000/predict_qber \
-  -H "Content-Type: application/json" \
-  -d '{"noise_level": 0.05, "attack_probability": 0.3, "channel_loss": 0.1}'
-```
-
----
 
 ## Security Thresholds
 
-| QBER Range | Status  | Meaning                        |
-|------------|---------|--------------------------------|
-| < 5%       | Secure  | Clean channel                  |
-| 5–11%      | Warning | Noise or weak interference     |
-| 11–20%     | Attack  | Likely eavesdropping (Eve)     |
-| > 20%      | Abort   | Channel severely compromised   |
+| QBER | Status | Meaning |
+|------|--------|---------|
+| < 5% | ✅ Secure | Clean channel |
+| 5–11% | ⚠️ Warning | Noise or weak interference |
+| 11–20% | 🚨 Attack | Likely eavesdropping |
+| > 20% | ❌ Abort | Channel severely compromised |
 
 ---
 
-## Architecture
+## Stack
 
-```
-User → Dashboard (React)
-         ↓ HTTP
-      FastAPI (api/main.py)
-       ├── BB84/E91 Engine (Qiskit + AerSimulator)
-       ├── QBER Module (error rate + trend analysis)
-       ├── OTP Encryption (XOR with quantum key)
-       └── ML Predictor (GradientBoostingRegressor)
-```
+- **Qiskit + AerSimulator** — quantum circuit simulation
+- **IBM Quantum** — real hardware execution
+- **scikit-learn** — ML threat prediction
+- **Frontend** — it's plain HTML/CSS/JS, not a React/JS framework app
+- **No API needed ** — everything runs locally in the browser, no FastAPI server required for the simulator
 
 ---
 
-## How BB84 Works
+## Why Quantum Cryptography
 
-1. Alice generates random bits + random bases (Z or X)
-2. Alice encodes qubits and sends them
-3. Bob measures in random bases
-4. Alice and Bob publicly compare bases (keep matching ones)
-5. A sample of matching bits is used to compute QBER
-6. If QBER < 11%: secure key extracted; if higher → Eve detected
+Classical encryption relies on computational hardness — it's hard to break, but not impossible. Quantum cryptography is different. The act of observing a quantum channel physically disturbs it. Any eavesdropper leaves a mathematically guaranteed trace. You don't need to trust the math — the laws of physics enforce it.
 
-## How E91 Works
+---
 
-1. An entangled Bell pair (Φ+) is created per round
-2. Alice and Bob each receive one qubit
-3. They measure in different angles
-4. Correlations are used to compute the CHSH value
-5. Bell inequality violation (|S| > 2) confirms quantum entanglement
-6. Matching bases yield the raw key; QBER is computed on it
