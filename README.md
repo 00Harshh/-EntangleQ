@@ -82,4 +82,8 @@ EntangleQ/
 Classical encryption relies on computational hardness — it's hard to break, but not impossible. Quantum cryptography is different. The act of observing a quantum channel physically disturbs it. Any eavesdropper leaves a mathematically guaranteed trace. You don't need to trust the math — the laws of physics enforce it.
 
 ---
+<img width="1460" height="843" alt="Screenshot 2026-03-05 at 3 17 30 PM" src="https://github.com/user-attachments/assets/f8451015-3605-4d95-86ea-fbc801977748" />
+<img width="1467" height="824" alt="Screenshot 2026-03-05 at 3 16 45 PM" src="https://github.com/user-attachments/assets/d57123fa-7d6a-45b2-898e-7c55229ccdfb" />
+<img width="1126" height="836" alt="Screenshot 2026-03-05 at 3 24 31 PM" src="https://github.com/user-attachments/assets/fd97ff6b-f9c9-448c-b04c-c574d70e4867" />
+
 
